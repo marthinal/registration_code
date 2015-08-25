@@ -1,0 +1,9 @@
+type: module
+name: Registration Code
+description: 'Sends an email with a verificatmion code needed for registration process.'
+package: Web services
+core: 8.x
+dependencies:
+  - rest
+
+
