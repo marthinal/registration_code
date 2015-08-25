@@ -99,7 +99,6 @@ class RegistrationCodeResourceTest extends UnitTestCase {
     $method = $this->getProtectedMethod('generateCode');
     // No exception is thrown.
     $result = $method->invokeArgs($this->testClass, array());
-    var_dump($result);
 
   }
 
