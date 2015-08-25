@@ -79,15 +79,24 @@ class RegistrationCodeResource extends ResourceBase {
       throw new BadRequestHttpException('Please insert a valid email address.');
     }
 
-    return new ResourceResponse(NULL, 201);
+    $this->sendEmailWithCode($this->generateCode());
+
+    return new ResourceResponse(NULL, 204);
 
   }
 
   /**
-   * Generates
+   * Generates the code.
    */
   protected function generateCode() {
     return rand(10000, 100000);
+  }
+
+  /**
+   * @param $code
+   */
+  protected function sendEmailWithCode($code) {
+
   }
 
 }

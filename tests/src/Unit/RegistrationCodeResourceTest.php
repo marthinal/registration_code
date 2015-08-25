@@ -82,19 +82,34 @@ class RegistrationCodeResourceTest extends UnitTestCase {
     $this->assertInstanceOf('Drupal\rest\ResourceResponse', $response);
   }
 
+  /**
+   * Tests generateCode() method.
+   */
   public function testGenerateCodeExists() {
     $method = $this->getProtectedMethod('generateCode');
     // No exception is thrown.
     $method->invokeArgs($this->testClass, array());
-
   }
 
-  public function testCodeIsIntegerAndOfNumberDigits() {
+  /**
+   * Tests the code.
+   */
+  public function testCodeIsIntegerAndNumberOfDigits() {
     $method = $this->getProtectedMethod('generateCode');
     // No exception is thrown.
     $code = $method->invokeArgs($this->testClass, array());
     $this->assertInternalType("int", $code);
     $this->assertGreaterThanOrEqual( 5, strlen($code), "Code has the right number of digits" );
   }
+
+  /**
+   * Tests sendEmailWithCode() method.
+   */
+  public function testSendEmailWithCode() {
+    $method = $this->getProtectedMethod('sendEmailWithCode');
+    // No exception is thrown.
+    $method->invokeArgs($this->testClass, array(10000));
+  }
+
 
 }
