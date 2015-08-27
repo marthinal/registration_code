@@ -1,0 +1,41 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the Search API module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function registration_code_schema() {
+  $schema['registration_code'] = array(
+    'description' => 'Stores emails and codes to verify user registration.',
+    'fields' => array(
+      'rcid' => array(
+        'description' => 'The ID of the index',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'email' => array(
+        'description' => 'The email',
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+      ),
+      'code' => array(
+        'description' => 'The code',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+
+    ),
+
+    'indexes' => array(
+      'execution' => array('email'),
+    ),
+    'primary key' => array('rcid')
+  );
+
+  return $schema;
+}
