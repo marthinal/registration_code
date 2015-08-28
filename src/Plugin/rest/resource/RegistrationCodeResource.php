@@ -99,23 +99,27 @@ class RegistrationCodeResource extends ResourceBase {
   }
 
   /**
-   * @param $email
-   * @return ResourceResponse
+   * Responds to the registration code POST requests, generating and sending the code by email.
+   *
+   * @param array $email
+   *
+   * @return \Drupal\rest\ResourceResponse
+   *   The HTTP response object.
    */
   public function post(array $email) {
     // Empty email.
     if ($email['email'][0]['value'] == NULL || $email['email'][0]['value'] == '') {
       throw new BadRequestHttpException('Missing email address.');
     }
-
     // Invalid email.
     if (!$this->emailValidator->isvalid($email['email'][0]['value'])) {
       throw new BadRequestHttpException('Please insert a valid email address.');
     }
-
+    // Control the limit of code requests.
     $this->floodControl();
-
+    // Generate the code and send by email.
     $this->codeProxy->registrationCodeProcess($email['email'][0]['value']);
+    // Register each request to verify if the limit is exceeded.
     $this->flood->register('registration_code', $this->config('registration_code.settings')->get('flood.interval'));
 
     return new ResourceResponse(NULL, 204);
@@ -123,7 +127,7 @@ class RegistrationCodeResource extends ResourceBase {
   }
 
   /**
-   *
+   * Verify if the user can request for a code again.
    */
   protected function floodControl() {
     $limit = $this->config('registration_code.settings')->get('flood.limit');
@@ -135,7 +139,7 @@ class RegistrationCodeResource extends ResourceBase {
   }
 
   /**
-   *
+   * Get the config by name.
    *
    * @param $name
    * @return mixed
