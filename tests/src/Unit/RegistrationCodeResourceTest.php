@@ -19,6 +19,7 @@ class RegistrationCodeResourceTest extends UnitTestCase {
   protected $logger;
   protected $emailValidator;
   protected $reflection;
+  protected $codeProxy;
 
   /**
    * {@inheritdoc}
@@ -26,12 +27,14 @@ class RegistrationCodeResourceTest extends UnitTestCase {
   protected function setUp() {
     parent::setUp();
 
+    $this->codeProxy = $this->getMock('\Drupal\registration_code\Utility\RegistrationCodeProxy');
+
     $this->logger = $this->getMock('Psr\Log\LoggerInterface');
-    $this->emailValidator = $this->getMockBuilder('\Symfony\Component\Validator\Constraints\EmailValidator')
+    $this->emailValidator = $this->getMockBuilder('\Egulias\EmailValidator\EmailValidator')
       ->setMethods(array('isValid'))
       ->getMock();
 
-    $this->testClass = new RegistrationCodeResource([], 'plugin_id', '', [], $this->logger, $this->emailValidator);
+    $this->testClass = new RegistrationCodeResource([], 'plugin_id', '', [], $this->logger, $this->emailValidator, $this->codeProxy);
     $this->reflection = new \ReflectionClass($this->testClass);
   }
 
@@ -53,7 +56,7 @@ class RegistrationCodeResourceTest extends UnitTestCase {
    * @expectedExceptionMessage Missing email address.
    */
   public function testEmptyPost() {
-    $this->testClass->post(NULL);
+    $this->testClass->post(['email' => [0 => ['value' => '']]]);
   }
 
   /**
@@ -66,7 +69,7 @@ class RegistrationCodeResourceTest extends UnitTestCase {
       ->method('isValid')
       ->willReturn(0);
 
-    $this->testClass->post('YesIKnowThisIsAnInvalidEmailAddress');
+    $this->testClass->post(['email' => [0 => ['value' => 'YesIKnowThisIsAnInvalidEmailAddress']]]);
   }
 
   /**
@@ -78,38 +81,17 @@ class RegistrationCodeResourceTest extends UnitTestCase {
       ->method('isValid')
       ->willReturn(1);
 
-    $response = $this->testClass->post('druplicon@mysitesuperpoweredbydrupal.com');
+    $response = $this->testClass->post(['email' => [0 => ['value' => 'druplicon@mysitesuperpoweredbydrupal.com']]]);
     $this->assertInstanceOf('Drupal\rest\ResourceResponse', $response);
   }
 
   /**
    * Tests generateCode() method.
    */
-  public function testGenerateCodeExists() {
+  /*public function testGenerateCodeExists() {
     $method = $this->getProtectedMethod('generateCode');
     // No exception is thrown.
     $method->invokeArgs($this->testClass, array());
-  }
-
-  /**
-   * Tests the code.
-   */
-  public function testCodeIsIntegerAndNumberOfDigits() {
-    $method = $this->getProtectedMethod('generateCode');
-    // No exception is thrown.
-    $code = $method->invokeArgs($this->testClass, array());
-    $this->assertInternalType("int", $code);
-    $this->assertGreaterThanOrEqual( 5, strlen($code), "Code has the right number of digits" );
-  }
-
-  /**
-   * Tests sendEmailWithCode() method.
-   */
-  public function testSendEmailWithCode() {
-    $method = $this->getProtectedMethod('sendEmailWithCode');
-    // No exception is thrown.
-    $method->invokeArgs($this->testClass, array(10000));
-  }
-
+  }*/
 
 }
