@@ -6,12 +6,16 @@
  */
 
 namespace Drupal\registration_code\Plugin\rest\resource;
+
+use Drupal\Core\Config\ConfigFactory;
+use Drupal\Core\Flood\FloodInterface;
 use Drupal\rest\Plugin\ResourceBase;
 use Drupal\rest\ResourceResponse;
+use Egulias\EmailValidator\EmailValidator;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\Validator\Constraints\EmailValidator;
+use Drupal\registration_code\Proxy\RegistrationCodeProxy;
 
 /**
  * Represents user registration as resource.
@@ -32,6 +36,22 @@ class RegistrationCodeResource extends ResourceBase {
    */
   protected $emailValidator;
 
+  /**
+   * Proxy class used to create and insert the code.
+   *
+   * @var RegistrationCodeProxy
+   */
+  protected $codeProxy;
+
+  /**
+   * The flood control mechanism.
+   *
+   * @var \Drupal\Core\Flood\FloodInterface
+   */
+  protected $flood;
+
+
+  protected $configFactory;
 
   /**
    * Constructs a new RegistrationCodeResource instance.
@@ -46,12 +66,19 @@ class RegistrationCodeResource extends ResourceBase {
    *   The available serialization formats.
    * @param LoggerInterface $loggery
    *   A logger instance.
-   * @param \Symfony\Component\Validator\Constraints\EmailValidator
+   * @param \Egulias\EmailValidator\EmailValidator
    *   The email validator.
+   * @param \Drupal\Core\Database\Connection $database
+   *   Database Service Object.
+   * @param \Drupal\Core\Flood\FloodInterface $flood
+   *   The flood control mechanism.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, array $serializer_formats, LoggerInterface $loggery, EmailValidator $emailValidator) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, array $serializer_formats, LoggerInterface $loggery, EmailValidator $emailValidator,RegistrationCodeProxy $codeProxy, FloodInterface $flood, ConfigFactory $configFactory) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $serializer_formats, $loggery);
     $this->emailValidator = $emailValidator;
+    $this->codeProxy = $codeProxy;
+    $this->flood = $flood;
+    $this->configFactory = $configFactory;
   }
 
   /**
@@ -64,39 +91,57 @@ class RegistrationCodeResource extends ResourceBase {
       $plugin_definition,
       $container->getParameter('serializer.formats'),
       $container->get('logger.factory')->get('rest'),
-      $container->get('email.validator')
+      $container->get('email.validator'),
+      new RegistrationCodeProxy(),
+      $container->get('flood'),
+      $container->get('config.factory')
     );
   }
 
-  public function post($email) {
+  /**
+   * @param $email
+   * @return ResourceResponse
+   */
+  public function post(array $email) {
     // Empty email.
-    if ($email == NULL) {
+    if ($email['email'][0]['value'] == NULL || $email['email'][0]['value'] == '') {
       throw new BadRequestHttpException('Missing email address.');
     }
 
     // Invalid email.
-    if (!$this->emailValidator->isvalid($email)) {
+    if (!$this->emailValidator->isvalid($email['email'][0]['value'])) {
       throw new BadRequestHttpException('Please insert a valid email address.');
     }
 
-    $this->sendEmailWithCode($this->generateCode());
+    $this->floodControl();
+
+    $this->codeProxy->registrationCodeProcess($email['email'][0]['value']);
+    $this->flood->register('registration_code', $this->config('registration_code.settings')->get('flood.interval'));
 
     return new ResourceResponse(NULL, 204);
 
   }
 
   /**
-   * Generates the code.
+   *
    */
-  protected function generateCode() {
-    return rand(10000, 100000);
+  protected function floodControl() {
+    $limit = $this->config('registration_code.settings')->get('flood.limit');
+    $interval = $this->config('registration_code.settings')->get('flood.interval');
+
+    if (!$this->flood->isAllowed('registration_code', $limit, $interval)) {
+      throw new BadRequestHttpException('Code requests limit exceeded.');
+    }
   }
 
   /**
-   * @param $code
+   *
+   *
+   * @param $name
+   * @return mixed
    */
-  protected function sendEmailWithCode($code) {
-
+  protected function config($name) {
+    return $this->configFactory->get($name);
   }
 
 }
