@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Install, update and uninstall functions for the Search API module.
+ * Install, update and uninstall functions for the Registration Code module.
  */
 
 /**
@@ -28,7 +28,6 @@ function registration_code_schema() {
         'type' => 'int',
         'not null' => TRUE,
       ),
-
     ),
 
     'indexes' => array(
@@ -39,3 +38,55 @@ function registration_code_schema() {
 
   return $schema;
 }
+
+/**
+ * Implements hook_install().
+ */
+function registration_code_install() {
+
+  // Create the field.
+  $field_settings = [
+    'field_name' => 'registration_code',
+    'entity_type' => 'user',
+    'type' => 'integer'
+  ];
+  \Drupal::entityManager()
+    ->getStorage('field_storage_config')
+    ->create($field_settings)
+    ->save();
+
+  // Create the instance.
+  $instance_settings = [
+    'field_name' => 'registration_code',
+    //'required' => 'true',
+    'label' => 'Registration Code',
+    'description' => 'Registration Code',
+    'entity_type' => 'user',
+    'bundle' => 'user',
+    'display' => [
+      'teaser' => [
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ],
+      'default' => [
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ]
+    ]
+  ];
+  \Drupal::entityManager()
+    ->getStorage('field_config')
+    ->create($instance_settings)
+    ->save();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function registration_code_uninstall() {
+  // Remove the registration_code field.
+  \Drupal::entityManager()->getStorage('field_config')->load('user.user.registration_code')->delete();
+  //\Drupal::entityManager()->getStorage('field_storage_config')->load('user.registration_code')->delete();
+}
+
+
