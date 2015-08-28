@@ -9,6 +9,7 @@ want to use the link that redirects to the website.
 
 Here is an example for the code request using json as format:
 
+```json
 {
   "email": [
     {
@@ -16,11 +17,13 @@ Here is an example for the code request using json as format:
     }
   ]
 }
+```
 
 Flood control exists and you can check the settings in the settings yaml.
 
 And here is the example using hal_json as format for creating a new account:
 
+```json
 {
   "langcode": [
     {
@@ -53,6 +56,7 @@ And here is the example using hal_json as format for creating a new account:
     }
   ]
 }
+```
 
 I think we can add this functionality to the registration form but probably for a website you can use
 directly the link that Drupal generates by default.
