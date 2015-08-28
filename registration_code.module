@@ -1,0 +1,34 @@
+<?php
+
+use Drupal\Core\Entity\EntityTypeInterface;
+
+/**
+ * Implements hook_entity_bundle_field_info_alter().
+ *
+ * @param $fields
+ * @param EntityTypeInterface $entity_type
+ * @param $bundle
+ */
+function registration_code_entity_bundle_field_info_alter(&$fields, EntityTypeInterface $entity_type, $bundle) {
+  // Add the constraint to the field where we need to validate the code.
+  if ($entity_type->id() == 'user' && $bundle == 'user') {
+    $fields['registration_code']->addConstraint('registrationCode');
+  }
+}
+
+/**
+ * Implements hook_mail().
+ *
+ * @param $key
+ * @param $message
+ * @param $params
+ */
+function registration_code_mail($key, &$message, $params) {
+  switch ($key) {
+    case 'send_code':
+      $message['subject'] = 'Registration Code!!';
+      $message['body'][] = t('Here is your code: @code', array('@code' => $params['code']));
+
+      break;
+  }
+}
