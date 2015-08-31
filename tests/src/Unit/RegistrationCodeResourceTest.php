@@ -16,10 +16,14 @@ use Drupal\Tests\UnitTestCase;
 class RegistrationCodeResourceTest extends UnitTestCase {
 
   protected $testClass;
+  protected $testClassMock;
   protected $logger;
   protected $emailValidator;
   protected $reflection;
   protected $codeProxy;
+  protected $flood;
+  protected $configFactory;
+  protected $configStub;
 
   /**
    * {@inheritdoc}
@@ -27,14 +31,30 @@ class RegistrationCodeResourceTest extends UnitTestCase {
   protected function setUp() {
     parent::setUp();
 
-    $this->codeProxy = $this->getMock('\Drupal\registration_code\Utility\RegistrationCodeProxy');
+    $this->codeProxy = $this->getMock('\Drupal\registration_code\Proxy\RegistrationCodeProxy');
 
-    $this->logger = $this->getMock('Psr\Log\LoggerInterface');
-    $this->emailValidator = $this->getMockBuilder('\Egulias\EmailValidator\EmailValidator')
-      ->setMethods(array('isValid'))
+    $this->configFactory =  $this->getMockBuilder('\Drupal\Core\Config\ConfigFactory')
+      ->disableOriginalConstructor()
       ->getMock();
 
-    $this->testClass = new RegistrationCodeResource([], 'plugin_id', '', [], $this->logger, $this->emailValidator, $this->codeProxy);
+    $this->flood = $this->getMockBuilder('\Drupal\Core\Flood\DatabaseBackend')
+      ->setMethods(['register'])
+      ->disableOriginalConstructor()
+      ->getMock();
+
+    $this->logger = $this->getMock('Psr\Log\LoggerInterface');
+
+    $this->emailValidator = $this->getMockBuilder('\Egulias\EmailValidator\EmailValidator')
+      ->setMethods(['isValid'])
+      ->getMock();
+
+    $this->testClass = new RegistrationCodeResource([], 'plugin_id', '', [], $this->logger, $this->emailValidator, $this->codeProxy, $this->flood, $this->configFactory);
+
+    $this->testClassMock = $this->getMockBuilder('\Drupal\registration_code\Plugin\rest\resource\RegistrationCodeResource')
+      ->setMethods(['floodControl', 'config'])
+      ->setConstructorArgs([[], 'plugin_id', '', [], $this->logger, $this->emailValidator, $this->codeProxy, $this->flood, $this->configFactory])
+      ->getMock();
+
     $this->reflection = new \ReflectionClass($this->testClass);
   }
 
@@ -56,6 +76,7 @@ class RegistrationCodeResourceTest extends UnitTestCase {
    * @expectedExceptionMessage Missing email address.
    */
   public function testEmptyPost() {
+
     $this->testClass->post(['email' => [0 => ['value' => '']]]);
   }
 
@@ -76,12 +97,28 @@ class RegistrationCodeResourceTest extends UnitTestCase {
    * Tests that the response object is correct.
    */
   public function testReturnsCorrectObject() {
+    $this->configStub = $this->getConfigFactoryStub([
+      'flood' => [
+        'limit' => 5,
+        'interval' => 3600
+      ],
+    ]);
+
     // Valid Email address.
     $this->emailValidator->expects($this->any())
       ->method('isValid')
       ->willReturn(1);
 
-    $response = $this->testClass->post(['email' => [0 => ['value' => 'druplicon@mysitesuperpoweredbydrupal.com']]]);
+    $this->flood->expects($this->any())
+      ->method('register')
+      ->willReturn(1);
+
+    $this->testClassMock->expects($this->any())
+      ->method('config')
+      ->willReturn($this->configStub);
+
+    $response = $this->testClassMock->post(['email' => [0 => ['value' => 'druplicon@mysitesuperpoweredbydrupal.com']]]);
+
     $this->assertInstanceOf('Drupal\rest\ResourceResponse', $response);
   }
 
