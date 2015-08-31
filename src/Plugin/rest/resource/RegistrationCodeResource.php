@@ -9,6 +9,7 @@ namespace Drupal\registration_code\Plugin\rest\resource;
 
 use Drupal\Core\Config\ConfigFactory;
 use Drupal\Core\Flood\FloodInterface;
+use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\rest\Plugin\ResourceBase;
 use Drupal\rest\ResourceResponse;
 use Egulias\EmailValidator\EmailValidator;
@@ -16,6 +17,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Drupal\registration_code\Proxy\RegistrationCodeProxy;
+use Drupal\Core\Database\Connection;
 
 /**
  * Represents user registration as resource.
@@ -50,9 +52,18 @@ class RegistrationCodeResource extends ResourceBase {
    */
   protected $flood;
 
+  /**
+   * The mail manager
+   *
+   * @var \Drupal\Core\Mail\MailManagerInterface
+   */
+  protected $mailManager;
+
 
   protected $configFactory;
 
+
+  protected $connection;
   /**
    * Constructs a new RegistrationCodeResource instance.
    *
@@ -72,13 +83,31 @@ class RegistrationCodeResource extends ResourceBase {
    *   Database Service Object.
    * @param \Drupal\Core\Flood\FloodInterface $flood
    *   The flood control mechanism.
+   * @param \Drupal\Core\Mail\MailManagerInterface
+   *   The mail manager.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, array $serializer_formats, LoggerInterface $loggery, EmailValidator $emailValidator,RegistrationCodeProxy $codeProxy, FloodInterface $flood, ConfigFactory $configFactory) {
+  public function __construct(
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    array $serializer_formats,
+    LoggerInterface $loggery,
+    EmailValidator $emailValidator,
+    RegistrationCodeProxy $codeProxy,
+    FloodInterface $flood,
+    ConfigFactory $configFactory,
+    MailManagerInterface $mail_manager,
+    Connection $connection
+  ) {
+
     parent::__construct($configuration, $plugin_id, $plugin_definition, $serializer_formats, $loggery);
+
     $this->emailValidator = $emailValidator;
     $this->codeProxy = $codeProxy;
     $this->flood = $flood;
     $this->configFactory = $configFactory;
+    $this->mailManager = $mail_manager;
+    $this->connection = $connection;
   }
 
   /**
@@ -94,7 +123,9 @@ class RegistrationCodeResource extends ResourceBase {
       $container->get('email.validator'),
       new RegistrationCodeProxy(),
       $container->get('flood'),
-      $container->get('config.factory')
+      $container->get('config.factory'),
+      $container->get('plugin.manager.mail'),
+      $container->get('database')
     );
   }
 
@@ -118,7 +149,7 @@ class RegistrationCodeResource extends ResourceBase {
     // Control the limit of code requests.
     $this->floodControl();
     // Generate the code and send by email.
-    $this->codeProxy->registrationCodeProcess($email['email'][0]['value']);
+    $this->codeProxy->registerCode($email['email'][0]['value'], $this->emailValidator, $this->mailManager, $this->connection,$this->config('system.site')->get('mail'));
     // Register each request to verify if the limit is exceeded.
     $this->flood->register('registration_code', $this->config('registration_code.settings')->get('flood.interval'));
 
