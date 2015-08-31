@@ -1,6 +1,6 @@
 # Registration Code for Drupal 8
 
-The Registration Code is a rest resource that allows anonymous users to request for a code before create
+The Registration Code module is a rest resource that allows anonymous users to request for a code before create
 a new account. The code will be received by email and you need to insert this code when creating the new
 user account using this resource https://www.drupal.org/node/2291055.
 
