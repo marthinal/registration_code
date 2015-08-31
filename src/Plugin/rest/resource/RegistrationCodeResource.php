@@ -62,14 +62,14 @@ class RegistrationCodeResource extends ResourceBase {
   /**
    * The config factory.
    *
-   * @var @var \Drupal\Core\Config\ConfigFactoryInterface
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $configFactory;
 
   /**
    * The database connection to use.
    *
-   * @var @var \Drupal\Core\Database\Connection
+   * @var \Drupal\Core\Database\Connection
    */
   protected $connection;
 
