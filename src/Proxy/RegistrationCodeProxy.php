@@ -14,7 +14,7 @@ use Drupal\Core\Database\Connection;
 
 /**
  * Class RegistrationCodeProxy
- * @package Drupal\registration_code\Utility
+ * @package Drupal\registration_code\Proxy
  */
 class RegistrationCodeProxy {
   public function registerCode($email, EmailValidator $emailValidator, MailManagerInterface $emailManager, Connection $connection, $sender) {

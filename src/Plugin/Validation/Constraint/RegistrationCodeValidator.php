@@ -17,16 +17,21 @@ use Symfony\Component\Validator\ConstraintValidator;
  */
 class RegistrationCodeValidator extends ConstraintValidator implements ContainerInjectionInterface {
 
-  protected $database;
+  /**
+   * The database connection to use.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $connection;
 
   /**
    * Constructs the object.
    *
-   * @param \Drupal\Core\Database\Connection $database
-   *   The current user.
+   * @param \Drupal\Core\Database\Connection $connection
+   *   The database connection.
    */
-  public function __construct(Connection $database) {
-    $this->database = $database;
+  public function __construct(Connection $connection) {
+    $this->connection = $connection;
   }
 
   /**

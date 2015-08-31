@@ -34,7 +34,7 @@ class RegistrationCodeResource extends ResourceBase {
   /**
    * The email validator.
    *
-   * @var \Symfony\Component\Validator\Constraints\EmailValidator
+   * @var \Egulias\EmailValidator\EmailValidator
    */
   protected $emailValidator;
 
@@ -59,11 +59,20 @@ class RegistrationCodeResource extends ResourceBase {
    */
   protected $mailManager;
 
-
+  /**
+   * The config factory.
+   *
+   * @var @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
   protected $configFactory;
 
-
+  /**
+   * The database connection to use.
+   *
+   * @var @var \Drupal\Core\Database\Connection
+   */
   protected $connection;
+
   /**
    * Constructs a new RegistrationCodeResource instance.
    *
@@ -79,12 +88,14 @@ class RegistrationCodeResource extends ResourceBase {
    *   A logger instance.
    * @param \Egulias\EmailValidator\EmailValidator
    *   The email validator.
-   * @param \Drupal\Core\Database\Connection $database
-   *   Database Service Object.
+   * @param \Drupal\registration_code\Proxy\RegistrationCodeProxy
+   *   The proxy class for register code methods.
    * @param \Drupal\Core\Flood\FloodInterface $flood
    *   The flood control mechanism.
-   * @param \Drupal\Core\Mail\MailManagerInterface
+   * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
    *   The mail manager.
+   * @param \Drupal\Core\Database\Connection $connection
+   *   Database Service Object.
    */
   public function __construct(
     array $configuration,

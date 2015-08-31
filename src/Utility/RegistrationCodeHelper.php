@@ -12,16 +12,20 @@ use Egulias\EmailValidator\EmailValidator;
 use Drupal\Core\Database\Connection;
 
 /**
- * Defines a class containing utility methods for generating email codes.
+ * Defines a class containing utility methods to generate and send codes by email.
  */
 class RegistrationCodeHelper {
 
   /**
-   * @param $email
-   * @param EmailValidator $emailValidator
-   * @param MailManagerInterface $emailManager
-   * @param Connection $connection
-   * @param $sender
+   * Validates the email, generates and inserts the code into DB or updates it if
+   * the registry already exists. If everything works as expected then sends
+   * an email with the code.
+   *
+   * @param string $email
+   * @param \Egulias\EmailValidator\EmailValidator $emailValidator
+   * @param \Drupal\Core\Mail\MailManagerInterface $emailManager
+   * @param \Drupal\Core\Database\Connection $connection
+   * @param string $sender
    */
   public static function registerCode($email, EmailValidator $emailValidator, MailManagerInterface $emailManager, Connection $connection, $sender) {
     // Verify that the email is valid. Please validate the email before call this method.
@@ -49,11 +53,13 @@ class RegistrationCodeHelper {
   }
 
   /**
+   * Verifies if the email exists in the registration_code table. If it
+   * exits then update the registry with the new code, otherwise inserts
+   * the new code.
    *
-   *
-   * @param $email
-   * @param $code
-   * @param Connection $connection
+   * @param string $email
+   * @param integer $code
+   * @param \Drupal\Core\Database\Connection $connection
    */
   protected static function setCode($email, $code, Connection $connection) {
     // Verify if the email exists.
@@ -69,9 +75,11 @@ class RegistrationCodeHelper {
   }
 
   /**
-   * @param $connection
-   * @param $email
-   * @param $code
+   * Inserts the code.
+   *
+   * @param \Drupal\Core\Database\Connection $connection
+   * @param string $email
+   * @param integer $code
    */
   protected static function insertCode(Connection $connection, $email, $code) {
     $connection->insert('registration_code')
@@ -80,9 +88,11 @@ class RegistrationCodeHelper {
   }
 
   /**
-   * @param $connection
-   * @param $email
-   * @param $code
+   * Updates the code.
+   *
+   * @param \Drupal\Core\Database\Connection $connection
+   * @param string $email
+   * @param integer $code
    */
   protected static function updateCode(Connection $connection, $email, $code) {
     $connection->update('registration_code')
