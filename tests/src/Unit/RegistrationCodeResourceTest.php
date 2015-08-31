@@ -24,6 +24,8 @@ class RegistrationCodeResourceTest extends UnitTestCase {
   protected $flood;
   protected $configFactory;
   protected $configStub;
+  protected $emailManager;
+  protected $connection;
 
   /**
    * {@inheritdoc}
@@ -44,15 +46,23 @@ class RegistrationCodeResourceTest extends UnitTestCase {
 
     $this->logger = $this->getMock('Psr\Log\LoggerInterface');
 
+    $this->emailManager = $this->getMockBuilder('\Drupal\Core\Mail\MailManager')
+      ->disableOriginalConstructor()
+      ->getMock();
+
     $this->emailValidator = $this->getMockBuilder('\Egulias\EmailValidator\EmailValidator')
       ->setMethods(['isValid'])
       ->getMock();
 
-    $this->testClass = new RegistrationCodeResource([], 'plugin_id', '', [], $this->logger, $this->emailValidator, $this->codeProxy, $this->flood, $this->configFactory);
+    $this->connection = $this->getMockBuilder('\Drupal\Core\Database\Connection')
+      ->disableOriginalConstructor()
+      ->getMock();
+
+    $this->testClass = new RegistrationCodeResource([], 'plugin_id', '', [], $this->logger, $this->emailValidator, $this->codeProxy, $this->flood, $this->configFactory, $this->emailManager, $this->connection);
 
     $this->testClassMock = $this->getMockBuilder('\Drupal\registration_code\Plugin\rest\resource\RegistrationCodeResource')
       ->setMethods(['floodControl', 'config'])
-      ->setConstructorArgs([[], 'plugin_id', '', [], $this->logger, $this->emailValidator, $this->codeProxy, $this->flood, $this->configFactory])
+      ->setConstructorArgs([[], 'plugin_id', '', [], $this->logger, $this->emailValidator, $this->codeProxy, $this->flood, $this->configFactory, $this->emailManager, $this->connection])
       ->getMock();
 
     $this->reflection = new \ReflectionClass($this->testClass);
@@ -121,5 +131,5 @@ class RegistrationCodeResourceTest extends UnitTestCase {
 
     $this->assertInstanceOf('Drupal\rest\ResourceResponse', $response);
   }
-  
+
 }
