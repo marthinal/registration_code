@@ -7,6 +7,9 @@
 
 namespace Drupal\registration_code\Utility;
 
+use Drupal\Core\Mail\MailManagerInterface;
+use Egulias\EmailValidator\EmailValidator;
+use Drupal\Core\Database\Connection;
 
 /**
  * Defines a class containing utility methods for generating email codes.
@@ -15,10 +18,14 @@ class RegistrationCodeHelper {
 
   /**
    * @param $email
+   * @param EmailValidator $emailValidator
+   * @param MailManagerInterface $emailManager
+   * @param Connection $connection
+   * @param $sender
    */
-  public static function registrationCodeProcess($email) {
+  public static function registerCode($email, EmailValidator $emailValidator, MailManagerInterface $emailManager, Connection $connection, $sender) {
     // Verify that the email is valid. Please validate the email before call this method.
-    if(!\Drupal::service('email.validator')->isvalid($email)) {
+    if(!$emailValidator->isvalid($email)) {
       throw new \UnexpectedValueException('The email is not valid.');
     }
 
@@ -26,11 +33,10 @@ class RegistrationCodeHelper {
     $code = self::generateCode();
 
     // Insert the new code into the DB.
-    self::setCode($email, $code);
+    self::setCode($email, $code, $connection);
 
     // Send the code by email.
-    \Drupal::service('plugin.manager.mail')->mail('registration_code', 'send_code', $email, 'en', $params = array('code' => $code), \Drupal::config('system.site')->get('mail'));
-
+    $emailManager->mail('registration_code', 'send_code', $email, 'en', $params = array('code' => $code), $sender);
   }
 
   /**
@@ -43,12 +49,13 @@ class RegistrationCodeHelper {
   }
 
   /**
+   *
+   *
    * @param $email
    * @param $code
+   * @param Connection $connection
    */
-  protected static function setCode($email, $code) {
-    $connection = \Drupal::service('database');
-
+  protected static function setCode($email, $code, Connection $connection) {
     // Verify if the email exists.
     $query = $connection->select('registration_code', 'rc');
     $query->fields('rc', ['email']);
@@ -66,7 +73,7 @@ class RegistrationCodeHelper {
    * @param $email
    * @param $code
    */
-  protected static function insertCode($connection, $email, $code) {
+  protected static function insertCode(Connection $connection, $email, $code) {
     $connection->insert('registration_code')
       ->fields(['email' => $email, 'code' => $code])
       ->execute();
@@ -77,7 +84,7 @@ class RegistrationCodeHelper {
    * @param $email
    * @param $code
    */
-  protected static function updateCode($connection, $email, $code) {
+  protected static function updateCode(Connection $connection, $email, $code) {
     $connection->update('registration_code')
       ->fields(['code' => $code])
       ->condition('email', $email)
