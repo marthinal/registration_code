@@ -121,14 +121,5 @@ class RegistrationCodeResourceTest extends UnitTestCase {
 
     $this->assertInstanceOf('Drupal\rest\ResourceResponse', $response);
   }
-
-  /**
-   * Tests generateCode() method.
-   */
-  /*public function testGenerateCodeExists() {
-    $method = $this->getProtectedMethod('generateCode');
-    // No exception is thrown.
-    $method->invokeArgs($this->testClass, array());
-  }*/
-
+  
 }
