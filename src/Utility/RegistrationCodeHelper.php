@@ -102,11 +102,22 @@ class RegistrationCodeHelper {
   }
 
   /**
-   * @param $email
+   * Verifies that the email does not exist.
+   *
+   * @param string $email
    * @return bool
    */
   public static function userUniqueMail($email) {
-    return false;
+    $value_taken = (bool) \Drupal::entityQuery('user')
+      ->condition('mail', $email)
+      ->range(0, 1)
+      ->count()
+      ->execute();
+    if ($value_taken) {
+      return false;
+    }
+
+    return true;
   }
 
 }
