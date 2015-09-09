@@ -20,4 +20,8 @@ class RegistrationCodeProxy {
   public function registerCode($email, EmailValidator $emailValidator, MailManagerInterface $emailManager, Connection $connection, $sender) {
     return RegistrationCodeHelper::registerCode($email, $emailValidator, $emailManager, $connection, $sender);
   }
+
+  public function userUniqueMail($email) {
+    return RegistrationCodeHelper::userUniqueMail($email);
+  }
 }

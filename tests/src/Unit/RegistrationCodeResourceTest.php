@@ -33,7 +33,9 @@ class RegistrationCodeResourceTest extends UnitTestCase {
   protected function setUp() {
     parent::setUp();
 
-    $this->codeProxy = $this->getMock('\Drupal\registration_code\Proxy\RegistrationCodeProxy');
+    $this->codeProxy = $this->getMockBuilder('\Drupal\registration_code\Proxy\RegistrationCodeProxy')
+      ->setMethods(['userUniqueMail'])
+      ->getMock();
 
     $this->configFactory =  $this->getMockBuilder('\Drupal\Core\Config\ConfigFactory')
       ->disableOriginalConstructor()
@@ -101,35 +103,6 @@ class RegistrationCodeResourceTest extends UnitTestCase {
       ->willReturn(0);
 
     $this->testClass->post(['email' => [0 => ['value' => 'YesIKnowThisIsAnInvalidEmailAddress']]]);
-  }
-
-  /**
-   * Tests that the response object is correct.
-   */
-  public function testReturnsCorrectObject() {
-    $this->configStub = $this->getConfigFactoryStub([
-      'flood' => [
-        'limit' => 5,
-        'interval' => 3600
-      ],
-    ]);
-
-    // Valid Email address.
-    $this->emailValidator->expects($this->any())
-      ->method('isValid')
-      ->willReturn(1);
-
-    $this->flood->expects($this->any())
-      ->method('register')
-      ->willReturn(1);
-
-    $this->testClassMock->expects($this->any())
-      ->method('config')
-      ->willReturn($this->configStub);
-
-    $response = $this->testClassMock->post(['email' => [0 => ['value' => 'druplicon@mysitesuperpoweredbydrupal.com']]]);
-
-    $this->assertInstanceOf('Drupal\rest\ResourceResponse', $response);
   }
 
   /**

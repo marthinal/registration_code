@@ -101,5 +101,13 @@ class RegistrationCodeHelper {
       ->execute();
   }
 
+  /**
+   * @param $email
+   * @return bool
+   */
+  public static function userUniqueMail($email) {
+    return false;
+  }
+
 }
 
