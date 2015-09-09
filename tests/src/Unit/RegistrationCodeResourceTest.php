@@ -137,6 +137,17 @@ class RegistrationCodeResourceTest extends UnitTestCase {
    * @expectedExceptionMessage The email is already registered.
    */
   public function testEmailAddressAlreadyExists() {
+    // The email already exists.
+    $this->codeProxy->expects($this->any())
+      ->method('userUniqueMail')
+      ->willReturn(0);
+
+    // Valid Email address.
+    $this->emailValidator->expects($this->any())
+      ->method('isValid')
+      ->willReturn(1);
+
+    $this->testClassMock->post(['email' => [0 => ['value' => 'druplicon@mysitesuperpoweredbydrupal.com']]]);
 
   }
 

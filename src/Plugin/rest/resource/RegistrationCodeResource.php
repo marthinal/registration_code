@@ -157,6 +157,8 @@ class RegistrationCodeResource extends ResourceBase {
     if (!$this->emailValidator->isvalid($email['email'][0]['value'])) {
       throw new BadRequestHttpException('Please insert a valid email address.');
     }
+    
+
     // Control the limit of code requests.
     $this->floodControl();
     // Generate the code and send by email.
