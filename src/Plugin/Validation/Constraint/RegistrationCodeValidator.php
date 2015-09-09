@@ -57,7 +57,7 @@ class RegistrationCodeValidator extends ConstraintValidator implements Container
       $mail = $fields['mail']->getValue();
 
       // Verify if the email exists.
-      $query = $this->database->select('registration_code', 'rc');
+      $query = $this->connection->select('registration_code', 'rc');
       $query->fields('rc', ['code']);
       $query->condition('email', $mail[0]['value']);
       $code = $query->execute()->fetchfield();
