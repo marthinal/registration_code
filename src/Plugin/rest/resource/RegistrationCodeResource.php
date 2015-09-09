@@ -149,15 +149,21 @@ class RegistrationCodeResource extends ResourceBase {
    *   The HTTP response object.
    */
   public function post(array $email) {
+
     // Empty email.
     if ($email['email'][0]['value'] == NULL || $email['email'][0]['value'] == '') {
       throw new BadRequestHttpException('Missing email address.');
     }
+
     // Invalid email.
     if (!$this->emailValidator->isvalid($email['email'][0]['value'])) {
       throw new BadRequestHttpException('Please insert a valid email address.');
     }
-    
+
+    //  Email already registered.
+    if (!$this->codeProxy->userUniqueMail($email['email'][0]['value'])) {
+      throw new BadRequestHttpException('The email is already registered.');
+    }
 
     // Control the limit of code requests.
     $this->floodControl();
