@@ -18,9 +18,6 @@ Here is an example for the code request using json as format:
   ]
 }
 ```
-
-Flood control exists and you can check the settings in the settings yaml.
-
 And here is the example using hal_json as format for creating a new account:
 
 ```json

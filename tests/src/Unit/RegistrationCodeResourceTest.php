@@ -132,4 +132,12 @@ class RegistrationCodeResourceTest extends UnitTestCase {
     $this->assertInstanceOf('Drupal\rest\ResourceResponse', $response);
   }
 
+  /**
+   * @expectedException \Symfony\Component\HttpKernel\Exception\BadRequestHttpException
+   * @expectedExceptionMessage The email is already registered.
+   */
+  public function testEmailAddressAlreadyExists() {
+
+  }
+
 }
