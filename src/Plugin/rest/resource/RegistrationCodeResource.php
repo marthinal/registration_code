@@ -10,6 +10,7 @@ namespace Drupal\registration_code\Plugin\rest\resource;
 use Drupal\Core\Config\ConfigFactory;
 use Drupal\Core\Flood\FloodInterface;
 use Drupal\Core\Mail\MailManagerInterface;
+use Drupal\Core\Render\RenderContext;
 use Drupal\rest\Plugin\ResourceBase;
 use Drupal\rest\ResourceResponse;
 use Egulias\EmailValidator\EmailValidator;
@@ -167,12 +168,23 @@ class RegistrationCodeResource extends ResourceBase {
 
     // Control the limit of code requests.
     $this->floodControl();
-    // Generate the code and send by email.
-    $this->codeProxy->registerCode($email['email'][0]['value'], $this->emailValidator, $this->mailManager, $this->connection,$this->config('system.site')->get('mail'));
+
+    // Generate Register Code from a render context to add bubbleable_metadata to the response.
+    $context = new RenderContext();
+    $renderer = \Drupal::service('renderer');
+    $renderer->executeInRenderContext($context, function() use ($email) {
+      // Generate the code and send by email.
+      $this->codeProxy->registerCode($email['email'][0]['value'], $this->emailValidator, $this->mailManager, $this->connection,$this->config('system.site')->get('mail'));
+    });
+
+    $response = new ResourceResponse(NULL, 204);
+    if (!$context->isEmpty()) {
+      $response->addCacheableDependency($context->pop());
+    }
     // Register each request to verify if the limit is exceeded.
     $this->flood->register('registration_code', $this->config('registration_code.settings')->get('flood.interval'));
 
-    return new ResourceResponse(NULL, 204);
+    return $response;
 
   }
 
