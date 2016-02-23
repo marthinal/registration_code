@@ -1,0 +1,3 @@
+services:
+  registration_code.utility.code:
+    class: Drupal\registration_code\utility\RegistrationCode

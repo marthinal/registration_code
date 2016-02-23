@@ -11,13 +11,13 @@ use Drupal\Core\Config\ConfigFactory;
 use Drupal\Core\Flood\FloodInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\Render\RenderContext;
+use Drupal\registration_code\Utility\RegistrationCode;
 use Drupal\rest\Plugin\ResourceBase;
 use Drupal\rest\ResourceResponse;
 use Egulias\EmailValidator\EmailValidator;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Drupal\registration_code\Proxy\RegistrationCodeProxy;
 use Drupal\Core\Database\Connection;
 
 /**
@@ -40,11 +40,11 @@ class RegistrationCodeResource extends ResourceBase {
   protected $emailValidator;
 
   /**
-   * Proxy class used to create and insert the code.
+   * Registration Code Service.
    *
-   * @var RegistrationCodeProxy
+   * @var \Drupal\registration_code\Utility\RegistrationCode
    */
-  protected $codeProxy;
+  protected $codeHandler;
 
   /**
    * The flood control mechanism.
@@ -89,8 +89,8 @@ class RegistrationCodeResource extends ResourceBase {
    *   A logger instance.
    * @param \Egulias\EmailValidator\EmailValidator
    *   The email validator.
-   * @param \Drupal\registration_code\Proxy\RegistrationCodeProxy
-   *   The proxy class for register code methods.
+   * @param \Drupal\registration_code\Utility\RegistrationCode
+   *   The service to handle codes.
    * @param \Drupal\Core\Flood\FloodInterface $flood
    *   The flood control mechanism.
    * @param \Drupal\Core\Mail\MailManagerInterface $mail_manager
@@ -105,7 +105,7 @@ class RegistrationCodeResource extends ResourceBase {
     array $serializer_formats,
     LoggerInterface $loggery,
     EmailValidator $emailValidator,
-    RegistrationCodeProxy $codeProxy,
+    RegistrationCode $code,
     FloodInterface $flood,
     ConfigFactory $configFactory,
     MailManagerInterface $mail_manager,
@@ -115,7 +115,7 @@ class RegistrationCodeResource extends ResourceBase {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $serializer_formats, $loggery);
 
     $this->emailValidator = $emailValidator;
-    $this->codeProxy = $codeProxy;
+    $this->codeHandler = $code;
     $this->flood = $flood;
     $this->configFactory = $configFactory;
     $this->mailManager = $mail_manager;
@@ -133,7 +133,7 @@ class RegistrationCodeResource extends ResourceBase {
       $container->getParameter('serializer.formats'),
       $container->get('logger.factory')->get('rest'),
       $container->get('email.validator'),
-      new RegistrationCodeProxy(),
+      $container->get('registration_code.utility.code'),
       $container->get('flood'),
       $container->get('config.factory'),
       $container->get('plugin.manager.mail'),
@@ -162,7 +162,7 @@ class RegistrationCodeResource extends ResourceBase {
     }
 
     //  Email already registered.
-    if (!$this->codeProxy->userUniqueMail($email['email'][0]['value'])) {
+    if (!$this->userUniqueMail($email['email'][0]['value'])) {
       throw new BadRequestHttpException('The email is already registered.');
     }
 
@@ -174,7 +174,7 @@ class RegistrationCodeResource extends ResourceBase {
     $renderer = \Drupal::service('renderer');
     $renderer->executeInRenderContext($context, function() use ($email) {
       // Generate the code and send by email.
-      $this->codeProxy->registerCode($email['email'][0]['value'], $this->emailValidator, $this->mailManager, $this->connection,$this->config('system.site')->get('mail'));
+      $this->codeHandler->registerCode($email['email'][0]['value'], $this->emailValidator, $this->mailManager, $this->connection,$this->config('system.site')->get('mail'));
     });
 
     $response = new ResourceResponse(NULL, 204);
@@ -208,6 +208,25 @@ class RegistrationCodeResource extends ResourceBase {
    */
   protected function config($name) {
     return $this->configFactory->get($name);
+  }
+
+  /**
+   * Verifies that the email does not exist.
+   *
+   * @param string $email
+   * @return bool
+   */
+  protected function userUniqueMail($email) {
+    $value_taken = (bool) \Drupal::entityQuery('user')
+      ->condition('mail', $email)
+      ->range(0, 1)
+      ->count()
+      ->execute();
+    if ($value_taken) {
+      return false;
+    }
+
+    return true;
   }
 
 }

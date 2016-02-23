@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\registration_code\Utility\RegistrationCodeHelper.
+ * Contains \Drupal\registration_code\Utility\RegistrationCode.
  */
 
 namespace Drupal\registration_code\Utility;
@@ -14,7 +14,7 @@ use Drupal\Core\Database\Connection;
 /**
  * Defines a class containing utility methods to generate and send codes by email.
  */
-class RegistrationCodeHelper {
+class RegistrationCode {
 
   /**
    * Validates the email, generates and inserts the code into DB or updates it if
@@ -27,7 +27,7 @@ class RegistrationCodeHelper {
    * @param \Drupal\Core\Database\Connection $connection
    * @param string $sender
    */
-  public static function registerCode($email, EmailValidator $emailValidator, MailManagerInterface $emailManager, Connection $connection, $sender) {
+  public function registerCode($email, EmailValidator $emailValidator, MailManagerInterface $emailManager, Connection $connection, $sender) {
     // Verify that the email is valid. Please validate the email before call this method.
     if(!$emailValidator->isvalid($email)) {
       throw new \UnexpectedValueException('The email is not valid.');
@@ -48,7 +48,7 @@ class RegistrationCodeHelper {
    *
    * @return int
    */
-  public static function generateCode() {
+  public function generateCode() {
     return rand(10000, 100000);
   }
 
@@ -61,7 +61,7 @@ class RegistrationCodeHelper {
    * @param integer $code
    * @param \Drupal\Core\Database\Connection $connection
    */
-  protected static function setCode($email, $code, Connection $connection) {
+  protected function setCode($email, $code, Connection $connection) {
     // Verify if the email exists.
     $query = $connection->select('registration_code', 'rc');
     $query->fields('rc', ['email']);
@@ -81,7 +81,7 @@ class RegistrationCodeHelper {
    * @param string $email
    * @param integer $code
    */
-  protected static function insertCode(Connection $connection, $email, $code) {
+  protected function insertCode(Connection $connection, $email, $code) {
     $connection->insert('registration_code')
       ->fields(['email' => $email, 'code' => $code])
       ->execute();
@@ -94,30 +94,11 @@ class RegistrationCodeHelper {
    * @param string $email
    * @param integer $code
    */
-  protected static function updateCode(Connection $connection, $email, $code) {
+  protected function updateCode(Connection $connection, $email, $code) {
     $connection->update('registration_code')
       ->fields(['code' => $code])
       ->condition('email', $email)
       ->execute();
-  }
-
-  /**
-   * Verifies that the email does not exist.
-   *
-   * @param string $email
-   * @return bool
-   */
-  public static function userUniqueMail($email) {
-    $value_taken = (bool) \Drupal::entityQuery('user')
-      ->condition('mail', $email)
-      ->range(0, 1)
-      ->count()
-      ->execute();
-    if ($value_taken) {
-      return false;
-    }
-
-    return true;
   }
 
 }
