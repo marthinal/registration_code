@@ -19,7 +19,7 @@ function registration_code_mail($key, &$message, $params) {
   switch ($key) {
     case 'send_code':
       $message['subject'] = 'Registration Code!!';
-      $message['body'][] = t('Here is your code: @code', array('@code' => $prams['code']));
+      $message['body'][] = t('Here is your code: @code', array('@code' => $params['code']));
 
       break;
   }
